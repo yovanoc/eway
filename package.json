@@ -52,5 +52,9 @@
       "html"
     ],
     "all": true
+  },
+  "dependencies": {
+    "axios": "^0.18.0",
+    "electron-fetch": "^1.2.1"
   }
 }

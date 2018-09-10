@@ -1,1 +1,6 @@
 src
+test
+coverage
+.vscode
+tinker.ts
+.nyc_output

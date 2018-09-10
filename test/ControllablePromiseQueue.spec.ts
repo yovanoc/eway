@@ -1,15 +1,16 @@
 import { assert } from "chai";
 
-import { ControllablePromiseQueue, ControllablePromise } from "../src"
+import { ControllablePromise, ControllablePromiseQueue } from "../src"
+
 describe("ControllablePromiseQueue", () => {
 
-  describe('When the concurrency limit is 1', function () {
-    it('only execute one promise at one time', function (done) {
+  describe('When the concurrency limit is 1', () => {
+    it('only execute one promise at one time', (done) => {
       const promiseQueue = new ControllablePromiseQueue({ concurrency: 1 });
       promiseQueue.add(() => {
         return new ControllablePromise(resolve => {
           assert.equal(promiseQueue.ongoingCount, 1);
-          setTimeout(function () {
+          setTimeout(() => {
             resolve(1);
           }, 500)
         })
@@ -17,7 +18,7 @@ describe("ControllablePromiseQueue", () => {
 
       promiseQueue.add(() => {
         return new ControllablePromise(resolve => {
-          setTimeout(function () {
+          setTimeout(() => {
             resolve(1);
             assert.equal(promiseQueue.ongoingCount, 1);
           }, 500)
@@ -26,7 +27,7 @@ describe("ControllablePromiseQueue", () => {
 
       promiseQueue.add(() => {
         return new ControllablePromise(resolve => {
-          setTimeout(function () {
+          setTimeout(() => {
             resolve(1);
             assert.equal(promiseQueue.ongoingCount, 1);
             done();
@@ -42,12 +43,12 @@ describe("ControllablePromiseQueue", () => {
     });
   });
 
-  describe('When the concurrency limit is 2', function () {
-    it('only execute not more than two promises at one time', function (done) {
+  describe('When the concurrency limit is 2', () => {
+    it('only execute not more than two promises at one time', (done) => {
       const promiseQueue = new ControllablePromiseQueue({ concurrency: 2 });
       promiseQueue.add(() => {
         return new ControllablePromise(resolve => {
-          setTimeout(function () {
+          setTimeout(() => {
             resolve(1);
             assert.equal(promiseQueue.ongoingCount, 2);
           }, 500)
@@ -56,7 +57,7 @@ describe("ControllablePromiseQueue", () => {
 
       promiseQueue.add(() => {
         return new ControllablePromise(resolve => {
-          setTimeout(function () {
+          setTimeout(() => {
             resolve(1);
             assert.equal(promiseQueue.ongoingCount, 2);
           }, 500)
@@ -65,7 +66,7 @@ describe("ControllablePromiseQueue", () => {
 
       promiseQueue.add(() => {
         return new ControllablePromise(resolve => {
-          setTimeout(function () {
+          setTimeout(() => {
             resolve(1);
             assert.equal(promiseQueue.ongoingCount, 2);
           }, 500)
@@ -74,7 +75,7 @@ describe("ControllablePromiseQueue", () => {
 
       promiseQueue.add(() => {
         return new ControllablePromise(resolve => {
-          setTimeout(function () {
+          setTimeout(() => {
             resolve(1);
             assert.ok([1, 2].indexOf(promiseQueue.ongoingCount) > -1);
             done();
@@ -90,13 +91,13 @@ describe("ControllablePromiseQueue", () => {
     });
   });
 
-  describe('"Add" method can be chaining', function () {
-    it('the return value is itself', function (done) {
+  describe('"Add" method can be chaining', () => {
+    it('the return value is itself', (done) => {
       const promiseQueue = new ControllablePromiseQueue({ concurrency: 1 });
-      let pqInstance = promiseQueue.add(() => {
+      const pqInstance = promiseQueue.add(() => {
         return new ControllablePromise(resolve => {
           assert.equal(promiseQueue.ongoingCount, 1);
-          setTimeout(function () {
+          setTimeout(() => {
             resolve(1);
           }, 500)
         })
@@ -106,7 +107,7 @@ describe("ControllablePromiseQueue", () => {
 
       pqInstance.add(() => {
         return new ControllablePromise(resolve => {
-          setTimeout(function () {
+          setTimeout(() => {
             resolve(1);
             assert.equal(promiseQueue.ongoingCount, 1);
             done();

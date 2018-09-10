@@ -131,9 +131,9 @@ describe('ControllablePromise', () => {
     it('reject a ControllablePromiseCancelError when canceled', (done) => {
       let cancelHandlerRunCount = 0
       const cp = new ControllablePromise((resolve, reject, progress, onPause, onResume, onCancel) => {
-        onCancel((resolve) => {
+        onCancel((resolveCancel) => {
           cancelHandlerRunCount += 1
-          resolve()
+          resolveCancel()
         })
         setTimeout(resolve)
       })
@@ -171,9 +171,9 @@ describe('ControllablePromise', () => {
     it('if cancel handler is rejected, just unlock', (done) => {
       let cancelHandlerRunCount = 0
       const cp = new ControllablePromise((resolve, reject, progress, onPause, onResume, onCancel) => {
-        onCancel((resolve, reject) => {
+        onCancel((resolveCancel, rejectCancel) => {
           cancelHandlerRunCount += 1
-          reject()
+          rejectCancel()
         })
         setTimeout(resolve)
       })
@@ -208,9 +208,9 @@ describe('ControllablePromise', () => {
     it('cancel should fail if the promise is already fulfilled', (done) => {
       let cancelHandlerRunCount = 0
       const cp = new ControllablePromise((resolve, reject, progress, onPause, onResume, onCancel) => {
-        onCancel((resolve) => {
+        onCancel((resolveCancel) => {
           cancelHandlerRunCount += 1
-          resolve()
+          resolveCancel()
         })
         resolve()
       })
@@ -239,9 +239,9 @@ describe('ControllablePromise', () => {
       let cancelHandlerRunCount = 0
       const expectedMessage = 'Fatal error'
       const cp = new ControllablePromise((resolve, reject, progress, onPause, onResume, onCancel) => {
-        onCancel((resolve) => {
+        onCancel((resolveCancel) => {
           cancelHandlerRunCount += 1
-          resolve()
+          resolveCancel()
         })
         reject(new Error(expectedMessage))
       })
@@ -275,9 +275,9 @@ describe('ControllablePromise', () => {
       let cancelHandlerRunCount = 0
       let hasReject = false
       const cp = new ControllablePromise((resolve, reject, progress, onPause, onResume, onCancel) => {
-        onCancel((resolve) => {
+        onCancel((resolveCancel) => {
           cancelHandlerRunCount += 1
-          resolve()
+          resolveCancel()
         })
         setTimeout(resolve)
       })
@@ -320,9 +320,9 @@ describe('ControllablePromise', () => {
     it('cancel should fail if the promise is currently canceling', (done) => {
       let cancelHandlerRunCount = 0
       const cp = new ControllablePromise((resolve, reject, progress, onPause, onResume, onCancel) => {
-        onCancel((resolve) => {
+        onCancel((resolveCancel) => {
           cancelHandlerRunCount += 1
-          resolve()
+          resolveCancel()
         })
         setTimeout(resolve)
       })
@@ -347,9 +347,9 @@ describe('ControllablePromise', () => {
       let cancelHandlerRunCount = 0
       let hasResolve = false
       const cp = new ControllablePromise((resolve, reject, progress, onPause, onResume, onCancel) => {
-        onCancel((resolve) => {
+        onCancel((resolveCancel) => {
           cancelHandlerRunCount += 1
-          setTimeout(resolve, 50)
+          setTimeout(resolveCancel, 50)
         })
         setTimeout(resolve)
       })
@@ -420,9 +420,9 @@ describe('ControllablePromise', () => {
     it('pause', (done) => {
       let pauseHandlerRunCount = 0
       const cp = new ControllablePromise((resolve, reject, progress, onPause) => {
-        onPause((resolve) => {
+        onPause((resolvePause) => {
           pauseHandlerRunCount += 1
-          resolve()
+          resolvePause()
         })
       })
 
@@ -451,9 +451,9 @@ describe('ControllablePromise', () => {
     it('pause should fail if the promise is already settled', (done) => {
       let pauseHandlerRunCount = 0
       const cp = new ControllablePromise((resolve, reject, progress, onPause) => {
-        onPause((resolve) => {
+        onPause((resolvePause) => {
           pauseHandlerRunCount += 1
-          resolve()
+          resolvePause()
         })
         resolve()
       })
@@ -485,9 +485,9 @@ describe('ControllablePromise', () => {
       let pauseHandlerRunCount = 0
       const expectedMessage = 'Fatal error'
       const cp = new ControllablePromise((resolve, reject, progress, onPause) => {
-        onPause((resolve) => {
+        onPause((resolvePause) => {
           pauseHandlerRunCount += 1
-          resolve()
+          resolvePause()
         })
         reject(new Error(expectedMessage))
       })
@@ -531,13 +531,13 @@ describe('ControllablePromise', () => {
       let pauseHandlerRunCount = 0
       let cancelHandlerRunCount = 0
       const cp = new ControllablePromise((resolve, reject, progress, onPause, onResume, onCancel) => {
-        onPause((resolve) => {
+        onPause((resolvePause) => {
           pauseHandlerRunCount += 1
-          resolve()
+          resolvePause()
         })
-        onCancel((resolve) => {
+        onCancel((resolveCancel) => {
           cancelHandlerRunCount += 1
-          resolve()
+          resolveCancel()
         })
         setTimeout(resolve)
       })
@@ -583,9 +583,9 @@ describe('ControllablePromise', () => {
     it('pause should fail if the promise is currently pausing', (done) => {
       let pauseHandlerRunCount = 0
       const cp = new ControllablePromise((resolve, reject, progress, onPause) => {
-        onPause((resolve) => {
+        onPause((resolvePause) => {
           pauseHandlerRunCount += 1
-          resolve()
+          resolvePause()
         })
         setTimeout(resolve)
       })
@@ -653,7 +653,7 @@ describe('ControllablePromise', () => {
     })
 
     it('if no onPause handler, pause should fail if error occur in main promise', (done) => {
-      let pauseHandlerRunCount = 0
+      const pauseHandlerRunCount = 0
       const expectedMessage = 'Fatal error'
       const cp = new ControllablePromise((resolve, reject) => {
         setTimeout(() => reject(new Error(expectedMessage)))
@@ -697,13 +697,13 @@ describe('ControllablePromise', () => {
       let pauseHandlerRunCount = 0
       let resumeHandlerRunCount = 0
       const cp = new ControllablePromise((resolve, reject, progress, onPause, onResume) => {
-        onPause((resolve) => {
+        onPause((resolvePause) => {
           pauseHandlerRunCount += 1
-          resolve()
+          resolvePause()
         })
-        onResume((resolve) => {
+        onResume((resolveResume) => {
           resumeHandlerRunCount += 1
-          resolve()
+          resolveResume()
         })
       })
 
@@ -739,9 +739,9 @@ describe('ControllablePromise', () => {
     it('resume when already resumed', (done) => {
       let resumeHandlerRunCount = 0
       const cp = new ControllablePromise((resolve, reject, progress, onPause, onResume) => {
-        onResume((resolve) => {
+        onResume((resolveResume) => {
           resumeHandlerRunCount += 1
-          resolve()
+          resolveResume()
         })
       })
 
@@ -771,13 +771,13 @@ describe('ControllablePromise', () => {
       let pauseHandlerRunCount = 0
       let resumeHandlerRunCount = 0
       const cp = new ControllablePromise((resolve, reject, progress, onPause, onResume) => {
-        onPause((resolve) => {
+        onPause((resolvePause) => {
           pauseHandlerRunCount += 1
-          resolve()
+          resolvePause()
         })
-        onResume((resolve, reject) => {
+        onResume((resolveResume, rejectResume) => {
           resumeHandlerRunCount += 1
-          reject()
+          rejectResume()
         })
       })
 
@@ -814,9 +814,9 @@ describe('ControllablePromise', () => {
     it('resume should fail if the promise is already fulfilled', (done) => {
       let resumeHandlerRunCount = 0
       const cp = new ControllablePromise((resolve, reject, progress, onPause, onResume) => {
-        onResume((resolve) => {
+        onResume((resolveResume) => {
           resumeHandlerRunCount += 1
-          resolve()
+          resolveResume()
         })
         resolve()
       })
@@ -849,9 +849,9 @@ describe('ControllablePromise', () => {
       let resumeHandlerRunCount = 0
       const expectedMessage = 'Fatal error'
       const cp = new ControllablePromise((resolve, reject, progress, onPause, onResume) => {
-        onResume((resolve) => {
+        onResume((resolveResume) => {
           resumeHandlerRunCount += 1
-          resolve()
+          resolveResume()
         })
         reject(new Error(expectedMessage))
       })
@@ -895,13 +895,13 @@ describe('ControllablePromise', () => {
       let resumeHandlerRunCount = 0
       let cancelHandlerRunCount = 0
       const cp = new ControllablePromise((resolve, reject, progress, onPause, onResume, onCancel) => {
-        onResume((resolve) => {
+        onResume((resolveResume) => {
           resumeHandlerRunCount += 1
-          resolve()
+          resolveResume()
         })
-        onCancel((resolve) => {
+        onCancel((resolveCancel) => {
           cancelHandlerRunCount += 1
-          resolve()
+          resolveCancel()
         })
         setTimeout(resolve)
       })
@@ -952,10 +952,10 @@ describe('ControllablePromise', () => {
       let resumeHandlerRunCount = 0
       let hasResumed = false
       const cp = new ControllablePromise((resolve, reject, progress, onPause, onResume) => {
-        onResume((resolve) => {
+        onResume((resolveResume) => {
           setTimeout(() => {
             resumeHandlerRunCount += 1
-            resolve()
+            resolveResume()
           }, 50)
         })
         setTimeout(() => resolve())
@@ -1007,9 +1007,9 @@ describe('ControllablePromise', () => {
       let resumeHandlerRunCount = 0
       const expectedMessage = 'Fatal error'
       const cp = new ControllablePromise((resolve, reject, progress, onPause, onResume) => {
-        onResume((resolve) => setTimeout(() => {
+        onResume((resolveResume) => setTimeout(() => {
           resumeHandlerRunCount += 1
-          resolve()
+          resolveResume()
         }, 50))
         setTimeout(() => reject(new Error(expectedMessage)))
       })
@@ -1142,13 +1142,13 @@ describe('ControllablePromise', () => {
       let pauseHandlerRunCount = 0
       let resumeHandlerRunCount = 0
       const cp = new ControllablePromise((resolve, reject, progress, onPause, onResume) => {
-        onPause((resolve) => {
+        onPause((resolvePause) => {
           pauseHandlerRunCount += 1
-          resolve()
+          resolvePause()
         })
-        onResume((resolve) => {
+        onResume((resolveResume) => {
           resumeHandlerRunCount += 1
-          resolve()
+          resolveResume()
         })
       })
 
@@ -1186,9 +1186,9 @@ describe('ControllablePromise', () => {
     it('pause then pause', (done) => {
       let pauseHandlerRunCount = 0
       const cp = new ControllablePromise((resolve, reject, progress, onPause) => {
-        onPause((resolve) => {
+        onPause((resolvePause) => {
           pauseHandlerRunCount += 1
-          resolve()
+          resolvePause()
         })
       })
 
@@ -1225,13 +1225,13 @@ describe('ControllablePromise', () => {
       let pauseHandlerRunCount = 0
       let cancelHandlerRunCount = 0
       const cp = new ControllablePromise((resolve, reject, progress, onPause, onResume, onCancel) => {
-        onPause((resolve) => {
+        onPause((resolvePause) => {
           pauseHandlerRunCount += 1
-          resolve()
+          resolvePause()
         })
-        onCancel((resolve) => {
+        onCancel((resolveCancel) => {
           cancelHandlerRunCount += 1
-          resolve()
+          resolveCancel()
         })
       })
 
