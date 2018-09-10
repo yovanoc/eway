@@ -8,7 +8,7 @@
     "object-literal-sort-keys": [true, "match-declaration-order"],
     "no-bitwise": false,
     "no-implicit-dependencies": false,
-    "no-submodule-imports": false,
+    "no-submodule-imports": false
   },
   "rulesDirectory": []
 }
