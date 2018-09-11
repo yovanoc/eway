@@ -31,12 +31,12 @@ export interface IFileData {
   size: number;
 }
 
-export function fetch<T>(subpath: string, filepath: string, fileData: IFileData, checkHash = true): ControllablePromise<T> {
+export function fetch(subpath: string, filepath: string, fileData: IFileData, checkHash = true): ControllablePromise<void> {
   const {
     size: expectedSize,
   } = fileData
 
-  const cp = new ControllablePromise<T>((resolve, reject, progress, onPause, onResume, onCancel) => {
+  const cp = new ControllablePromise<void>((resolve, reject, progress, onPause, onResume, onCancel) => {
     const url = subpath;
     const headers: any = {} // TODO: Put host in headers
 
@@ -149,6 +149,7 @@ export function fetch<T>(subpath: string, filepath: string, fileData: IFileData,
 
       electronFetch(url, {
         headers,
+        useElectronNet: false,
         timeout: TIMEOUT * (retryCount + 1),
         // responseType: "stream"
       }).then(onResponse)
@@ -165,6 +166,7 @@ export function fetch<T>(subpath: string, filepath: string, fileData: IFileData,
     }
 
     startElectronFetch()
+
     onPause((resolvePause, rejectPause) => {
       try {
         if (rs) {
@@ -193,8 +195,7 @@ export function fetch<T>(subpath: string, filepath: string, fileData: IFileData,
 
     onCancel((resolveCancel, rejectCancel) => {
       if (!isCancelable) {
-        rejectCancel(new Error(`${fileData.hash} is no longer cancellable`))
-        return
+        return rejectCancel(new Error(`${fileData.hash} is no longer cancellable`))
       }
 
       try {
