@@ -1,7 +1,7 @@
-// import axios, { AxiosResponse } from "axios";
 // @ts-ignore
-import electronFetch from "electron-fetch";
+import electronFetch, { FetchError, Response } from "electron-fetch";
 import * as fs from "fs"
+import { Readable } from "stream";
 import { ControllablePromise } from ".";
 import { getFileHash } from "./cryptoHelper";
 
@@ -20,20 +20,17 @@ export const RETRY_ERROR_CODES = [
 
 export function isRetryError(error: any): boolean {
   return error.type === 'request-timeout' ||
-    // (error instanceof electronFetch.FetchError &&
-    // error.type === 'system' &&
-    RETRY_ERROR_CODES.includes(error.code)
-  // )
+    // @ts-ignore
+    (error instanceof FetchError && error.type === 'system' && RETRY_ERROR_CODES.includes(error.code))
 }
 
 export interface IFileData {
-  targets: any;
-  size: number
+  hash: string;
+  size: number;
 }
 
-export function fetch<T>(subpath: string, filepath: string, fileData: IFileData, hash: string, checkHash = true): ControllablePromise<T> {
+export function fetch<T>(subpath: string, filepath: string, fileData: IFileData, checkHash = true): ControllablePromise<T> {
   const {
-    targets,
     size: expectedSize,
   } = fileData
 
@@ -41,7 +38,7 @@ export function fetch<T>(subpath: string, filepath: string, fileData: IFileData,
     const url = subpath;
     const headers: any = {} // TODO: Put host in headers
 
-    let rs: fs.ReadStream = null
+    let rs: Readable = null
     let ws: fs.WriteStream = null
     let size = 0
     let isCancelable = true
@@ -62,7 +59,7 @@ export function fetch<T>(subpath: string, filepath: string, fileData: IFileData,
       startElectronFetch()
     }
 
-    const onResponse = (res) => {
+    const onResponse = (res: Response) => {
       if (cp.isSettled || cp.isPaused || rs) {
         return
       }
@@ -85,7 +82,7 @@ export function fetch<T>(subpath: string, filepath: string, fileData: IFileData,
         return reject(new Error('Partial content not supported'))
       }
 
-      rs = res.body
+      rs = res.body as Readable
 
       ws = fs.createWriteStream(filepath, {
         flags: shouldResume ? 'a' : 'w',
@@ -108,14 +105,16 @@ export function fetch<T>(subpath: string, filepath: string, fileData: IFileData,
 
           getFileHash(filepath)
             .then((computedHash) => {
-              if (computedHash === hash) {
+              if (computedHash === fileData.hash) {
                 return resolve()
               }
               // tslint:disable-next-line:no-console
-              console.log(`fetch: computed hash differ from expected hash ${hash}`)
+              console.log(`fetch: computed hash differ from expected hash ${fileData.hash}`)
               cleanAndRetry()
             })
             .catch(reject)
+        } else if (!cp.isPaused) {
+          reject(new Error("Downloaded file has not the expected size"));
         }
       })
 
@@ -192,7 +191,7 @@ export function fetch<T>(subpath: string, filepath: string, fileData: IFileData,
 
     onCancel((resolveCancel, rejectCancel) => {
       if (!isCancelable) {
-        rejectCancel(new Error(`${hash} is no longer cancellable`))
+        rejectCancel(new Error(`${fileData.hash} is no longer cancellable`))
         return
       }
 

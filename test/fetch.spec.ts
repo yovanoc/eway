@@ -4,14 +4,18 @@ import { join } from "path";
 import { fetch } from "../src"
 
 describe.only("Fetch", () => {
-  it("should work x)", (done) => {
+  it("should work x)", function (done) {
+    this.timeout(10000)
     const cp = fetch(
       "http://192.168.113.152:3002/cytrus/dofus/hashes/eb/ebe61384adad5baad6271811c48323dbd4a7336e",
       join(__dirname, "./SmileyCategories.d2o"),
       {
-        targets: null,
+        hash: "ebe61384adad5baad6271811c48323dbd4a7336e",
         size: 14268822,
-      }, "ebe61384adad5baad6271811c48323dbd4a7336e")
+      },
+    )
+
+    // cp.cancel();
 
     // tslint:disable-next-line:no-console
     cp.onProgress(stats => console.log("stats", stats))
