@@ -1,3 +1,5 @@
+// tslint:disable-next-line:no-reference
+///<reference path="../node_modules/electron/electron.d.ts"/>
 // @ts-ignore
 import electronFetch, { FetchError, Response } from "electron-fetch";
 import * as fs from "fs"
