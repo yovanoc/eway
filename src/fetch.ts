@@ -149,8 +149,8 @@ export function fetch(subpath: string, filepath: string, fileData: IFileData, ch
 
       electronFetch(url, {
         headers,
-        useElectronNet: false,
         timeout: TIMEOUT * (retryCount + 1),
+        useElectronNet: false,
         // responseType: "stream"
       }).then(onResponse)
         .catch((error) => {
