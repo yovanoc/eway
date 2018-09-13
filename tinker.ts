@@ -1,5 +1,6 @@
 import ControllablePromise from "./src/promises/ControllablePromise";
 import ControllablePromiseQueue from "./src/promises/ControllablePromise/Queue";
+import { update } from "./src/updater"
 
 const onError = (error: any) => {
   // tslint:disable-next-line:no-console
@@ -115,6 +116,13 @@ const controllable = async () => {
   }
 }
 
-main();
+// main();
 // controllable();
 
+try {
+  update();
+} catch (error) {
+  // tslint:disable-next-line:no-console
+  console.log(error);
+  process.exit(0);
+}

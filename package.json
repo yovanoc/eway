@@ -26,13 +26,14 @@
   "homepage": "https://github.com/yovanoc/eway#readme",
   "devDependencies": {
     "@types/chai": "^4.1.4",
+    "@types/listr": "^0.13.0",
     "@types/mocha": "^5.2.5",
     "@types/node": "^10.9.4",
     "chai": "^4.1.2",
     "electron": "^3.0.0-beta.10",
     "mocha": "^5.2.0",
     "nyc": "^13.0.1",
-    "sinon": "^6.0.1",
+    "sinon": "^6.3.1",
     "ts-node": "^7.0.1",
     "tslint": "^5.11.0",
     "tslint-config-prettier": "^1.15.0",
@@ -55,6 +56,9 @@
     "all": true
   },
   "dependencies": {
-    "electron-fetch": "^1.2.1"
+    "axios": "^0.18.0",
+    "electron-fetch": "^1.2.1",
+    "listr": "^0.14.2",
+    "rxjs": "^6.3.2"
   }
 }

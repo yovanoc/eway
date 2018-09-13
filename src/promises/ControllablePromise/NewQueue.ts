@@ -4,6 +4,7 @@ export interface IPromiseQueuItem<T> {
   promiseGenerator: () => ControllablePromise<T>;
   resolve: (value?: T | PromiseLike<T>) => void;
   reject: (reason: any) => void;
+  progress: (stats?: any) => void;
 }
 
 export interface IPromiseQueueOptions {
@@ -11,12 +12,12 @@ export interface IPromiseQueueOptions {
 }
 
 export default class ControllablePromiseQueue<T> {
-
   private maxPendingPromises: number;
   private maxQueuedPromises: number;
   private options: IPromiseQueueOptions;
   private pendingPromises: number;
   private queue: Array<IPromiseQueuItem<T>>;
+  private paused: boolean;
 
   constructor(maxPendingPromises: number = Infinity, maxQueuedPromises: number = Infinity, options: IPromiseQueueOptions = {}) {
     this.options = options;
@@ -24,10 +25,22 @@ export default class ControllablePromiseQueue<T> {
     this.maxPendingPromises = maxPendingPromises;
     this.maxQueuedPromises = maxQueuedPromises;
     this.queue = [];
+    this.paused = false;
   }
 
+
+  public pause() {
+    this.paused = true;
+  }
+
+  public resume() {
+    this.paused = false;
+    this._dequeue();
+  }
+
+
   public add(promiseGenerator: () => ControllablePromise<T>): ControllablePromise<T> {
-    return new ControllablePromise<T>((resolve, reject) => {
+    return new ControllablePromise<T>((resolve, reject, progress) => {
       // Do not queue to much promises
       if (this.queue.length >= this.maxQueuedPromises) {
         return reject(new Error('Queue limit reached'));
@@ -37,10 +50,13 @@ export default class ControllablePromiseQueue<T> {
       this.queue.push({
         promiseGenerator,
         resolve,
-        reject
+        reject,
+        progress,
       });
 
-      this._dequeue();
+      if (!this.paused) {
+        this._dequeue();
+      }
     });
   }
 
@@ -67,6 +83,10 @@ export default class ControllablePromiseQueue<T> {
    * @private
    */
   private _dequeue(): boolean {
+    if (this.paused) {
+      return;
+    }
+
     if (this.pendingPromises >= this.maxPendingPromises) {
       return false;
     }
@@ -83,7 +103,11 @@ export default class ControllablePromiseQueue<T> {
     try {
       this.pendingPromises++;
 
-      item.promiseGenerator()
+      const p = item.promiseGenerator()
+
+      p.onProgress(item.progress);
+
+      p
         // Forward all stuff
         .then(value => {
           // It is not pending now
