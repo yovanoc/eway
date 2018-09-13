@@ -10,7 +10,7 @@ export default class Cytrus {
   private cytrus: ICytrus;
 
   constructor(
-    private baseUrl: string,
+    private baseUrl: string = Cytrus.CYTRUS_URL_PROD,
   ) { }
 
   public async updateCytrus(): Promise<ICytrus> {
@@ -92,10 +92,7 @@ export default class Cytrus {
   public getDownloadHandler(gameName: string, file: IFile, filepath: string) {
     const url = `${this.baseUrl}/${gameName}/hashes/${file.Hash.slice(0, 2)}/${file.Hash}`;
     return () => {
-      const cp = fetch(url, filepath, {
-        hash: file.Hash,
-        size: file.Size,
-      });
+      const cp = fetch(url, filepath, file);
       return cp;
     }
   }

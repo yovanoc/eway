@@ -6,6 +6,7 @@ import * as fs from "fs"
 import { Readable } from "stream";
 import { ControllablePromise } from ".";
 import { getFileHash } from "./cryptoHelper";
+import { IFile } from "./updater/ICytrus";
 
 export const TIMEOUT = 2000
 export const MAX_RETRY = 5
@@ -26,14 +27,9 @@ export function isRetryError(error: any): boolean {
     (error instanceof FetchError && error.type === 'system' && RETRY_ERROR_CODES.includes(error.code))
 }
 
-export interface IFileData {
-  hash: string;
-  size: number;
-}
-
-export function fetch(subpath: string, filepath: string, fileData: IFileData, checkHash = true): ControllablePromise<void> {
+export function fetch(subpath: string, filepath: string, fileData: IFile, checkHash = true): ControllablePromise<void> {
   const {
-    size: expectedSize,
+    Size: expectedSize,
   } = fileData
 
   const cp = new ControllablePromise<void>((resolve, reject, progress, onPause, onResume, onCancel) => {
@@ -107,11 +103,11 @@ export function fetch(subpath: string, filepath: string, fileData: IFileData, ch
 
           getFileHash(filepath)
             .then((computedHash) => {
-              if (computedHash === fileData.hash) {
+              if (computedHash === fileData.Hash) {
                 return resolve()
               }
               // tslint:disable-next-line:no-console
-              console.log(`fetch: computed hash differ from expected hash ${fileData.hash}`)
+              console.log(`fetch: computed hash differ from expected hash ${fileData.Hash}`)
               cleanAndRetry()
             })
             .catch(reject)
@@ -195,7 +191,7 @@ export function fetch(subpath: string, filepath: string, fileData: IFileData, ch
 
     onCancel((resolveCancel, rejectCancel) => {
       if (!isCancelable) {
-        return rejectCancel(new Error(`${fileData.hash} is no longer cancellable`))
+        return rejectCancel(new Error(`${fileData.Hash} is no longer cancellable`))
       }
 
       try {
