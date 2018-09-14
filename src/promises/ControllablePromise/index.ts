@@ -1,7 +1,7 @@
 import { ControllablePromiseCancelError, ControllablePromisePreconditionError } from "./errors";
 import { ControllablePromiseExecutor, ControllablePromiseState, IControllable, PromiseExecutor } from "./types";
 
-export default class ControllablePromise<T> implements IControllable<T> {
+export class ControllablePromise<T> implements IControllable<T> {
 
   /**
    * @readonly

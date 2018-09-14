@@ -1,5 +1,4 @@
-import ControllablePromise from "../ControllablePromise";
-import PriorityQueue, { IPriorityQueueOptions } from "./PriorityQueue";
+import { ControllablePromise, IPriorityQueueOptions, PriorityQueue } from "../..";
 
 export interface IPQueueOptions {
   carryoverConcurrencyCount?: boolean;
@@ -10,7 +9,7 @@ export interface IPQueueOptions {
   queueClass?: typeof PriorityQueue;
 }
 
-export default class PQueue {
+export class PQueue {
   public isPaused: boolean;
 
   private carryoverConcurrencyCount: boolean;
@@ -70,13 +69,16 @@ export default class PQueue {
   }
 
   public add<T>(fn: () => ControllablePromise<T>, options?: IPriorityQueueOptions): ControllablePromise<T> {
-    return new ControllablePromise<T>((resolve, reject, progress) => {
+    return new ControllablePromise<T>((resolve, reject, progress, onPause, onResume, onCancel) => {
       const run = () => {
         this.pendingCount++;
         this.intervalCount++;
 
         try {
           const fnn = fn();
+          onPause(fnn.pause)
+          onResume(fnn.resume)
+          onCancel(fnn.cancel)
           fnn.onProgress(progress);
           fnn.then(
             val => {

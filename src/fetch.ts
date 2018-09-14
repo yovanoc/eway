@@ -1,15 +1,9 @@
-// tslint:disable-next-line:no-reference
-///<reference path="../node_modules/electron/electron.d.ts"/>
-// @ts-ignore
-import electronFetch, { FetchError, Response } from "electron-fetch";
+import axios, { AxiosResponse } from "axios";
 import * as fs from "fs"
-import { Readable } from "stream";
 import { ControllablePromise } from ".";
 import { getFileHash } from "./cryptoHelper";
-import { IFile } from "./updater/ICytrus";
-
 export const TIMEOUT = 2000
-export const MAX_RETRY = 5
+export const MAX_RETRY = 10
 
 export const RETRY_ERROR_CODES = [
   'ECONNRESET',
@@ -19,24 +13,28 @@ export const RETRY_ERROR_CODES = [
   'ENOTFOUND',
   'ECONNABORTED',
   'EAI_AGAIN',
+  "EADDRINUSE",
 ]
 
+export interface IFile {
+  hash: string;
+  size: number;
+}
+
 export function isRetryError(error: any): boolean {
-  return error.type === 'request-timeout' ||
-    // @ts-ignore
-    (error instanceof FetchError && error.type === 'system' && RETRY_ERROR_CODES.includes(error.code))
+  return RETRY_ERROR_CODES.includes(error.code);
 }
 
 export function fetch(subpath: string, filepath: string, fileData: IFile, checkHash = true): ControllablePromise<void> {
   const {
-    Size: expectedSize,
+    size: expectedSize,
   } = fileData
 
   const cp = new ControllablePromise<void>((resolve, reject, progress, onPause, onResume, onCancel) => {
     const url = subpath;
     const headers: any = {} // TODO: Put host in headers
 
-    let rs: Readable = null
+    let rs: NodeJS.ReadStream = null
     let ws: fs.WriteStream = null
     let size = 0
     let isCancelable = true
@@ -54,10 +52,10 @@ export function fetch(subpath: string, filepath: string, fileData: IFile, checkH
           return reject(error)
         }
       }
-      startElectronFetch()
+      startDownload()
     }
 
-    const onResponse = (res: Response) => {
+    const onResponse = (res: AxiosResponse<any>) => {
       if (cp.isSettled || cp.isPaused || rs) {
         return
       }
@@ -80,7 +78,7 @@ export function fetch(subpath: string, filepath: string, fileData: IFile, checkH
         return reject(new Error('Partial content not supported'))
       }
 
-      rs = res.body as Readable
+      rs = res.data as NodeJS.ReadStream
 
       ws = fs.createWriteStream(filepath, {
         flags: shouldResume ? 'a' : 'w',
@@ -103,28 +101,33 @@ export function fetch(subpath: string, filepath: string, fileData: IFile, checkH
 
           getFileHash(filepath)
             .then((computedHash) => {
-              if (computedHash === fileData.Hash) {
+              if (computedHash === fileData.hash) {
                 return resolve()
               }
               // tslint:disable-next-line:no-console
-              console.log(`fetch: computed hash differ from expected hash ${fileData.Hash}`)
+              console.log(`fetch: computed hash differ from expected hash ${fileData.hash}`)
               cleanAndRetry()
             })
             .catch(reject)
         } else if (!cp.isPaused) {
+          if (fs.existsSync(filepath)) {
+            fs.unlinkSync(filepath)
+          }
           reject(new Error("Downloaded file has not the expected size"));
         }
       })
 
       rs.once('error', (error) => {
-        // logger.error('fetch', error)
+        // tslint:disable-next-line:no-console
+        console.log('fetch', error)
         ws.end(() => {
           reject(error)
         })
       })
 
       ws.once('error', (error) => {
-        // logger.error('fetch', error)
+        // tslint:disable-next-line:no-console
+        console.log('fetch', error)
         rs.destroy()
         reject(error)
       })
@@ -132,10 +135,12 @@ export function fetch(subpath: string, filepath: string, fileData: IFile, checkH
       rs.pipe(ws)
     }
 
-    const startElectronFetch = (retryCount = 0) => {
+    const startDownload = (retryCount = 0) => {
       shouldResume = fs.existsSync(filepath)
       if (shouldResume) {
         size = fs.statSync(filepath).size
+        // tslint:disable-next-line:no-console
+        // console.log("Size = ", size, !!size);
         if (!!size) {
           Object.assign(headers, { Range: `bytes=${size}-` })
         } else {
@@ -143,25 +148,26 @@ export function fetch(subpath: string, filepath: string, fileData: IFile, checkH
         }
       }
 
-      electronFetch(url, {
+      axios.get(url, {
         headers,
         timeout: TIMEOUT * (retryCount + 1),
-        useElectronNet: false,
-        // responseType: "stream"
+        responseType: "stream",
+        validateStatus: (status) => {
+          return (status >= 200 && status < 300) || status === 416;
+        },
       }).then(onResponse)
         .catch((error) => {
           const shouldRetry = retryCount < MAX_RETRY && isRetryError(error)
 
           if (shouldRetry) {
-            /* istanbul ignore next */
-            startElectronFetch(retryCount + 1)
+            startDownload(retryCount + 1)
           } else {
             reject(error)
           }
         })
     }
 
-    startElectronFetch()
+    startDownload()
 
     onPause((resolvePause, rejectPause) => {
       try {
@@ -182,7 +188,7 @@ export function fetch(subpath: string, filepath: string, fileData: IFile, checkH
     onResume((resolveResume, rejectResume) => {
       try {
         shouldResume = true
-        startElectronFetch()
+        startDownload()
         resolveResume()
       } catch (error) {
         rejectResume(error)
@@ -191,7 +197,7 @@ export function fetch(subpath: string, filepath: string, fileData: IFile, checkH
 
     onCancel((resolveCancel, rejectCancel) => {
       if (!isCancelable) {
-        return rejectCancel(new Error(`${fileData.Hash} is no longer cancellable`))
+        return rejectCancel(new Error(`${fileData.hash} is no longer cancellable`))
       }
 
       try {

@@ -26,18 +26,16 @@ export interface IPriorityQueue {
 }
 
 export interface IPriorityQueueElement {
-  run: () => void;
   priority: number;
+  run: () => void;
 }
 
 export interface IPriorityQueueOptions {
   priority: number;
 }
 
-export default class PriorityQueue implements IPriorityQueue {
-  constructor(
-    private queue: IPriorityQueueElement[] = [],
-  ) { }
+export class PriorityQueue implements IPriorityQueue {
+  private queue: IPriorityQueueElement[] = [];
 
   public enqueue(run: () => void, options?: IPriorityQueueOptions) {
     options = {
