@@ -1,6 +1,6 @@
 {
   "name": "eway",
-  "version": "0.0.4",
+  "version": "0.0.5",
   "description": "NodeJS utilities",
   "main": "dist/index.js",
   "types": "dist/index.d.ts",
