@@ -33,11 +33,11 @@ export class PQueue {
 
   constructor(options?: IPQueueOptions) {
     options = {
-      carryoverConcurrencyCount: false,
-      intervalCap: Infinity,
-      interval: 0,
-      concurrency: Infinity,
       autoStart: true,
+      carryoverConcurrencyCount: false,
+      concurrency: Infinity,
+      interval: 0,
+      intervalCap: Infinity,
       queueClass: PriorityQueue,
       ...options
     };

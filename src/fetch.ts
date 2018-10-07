@@ -170,8 +170,8 @@ export function fetch(
         axios
           .get(url, {
             headers,
-            timeout: TIMEOUT * (retryCount + 1),
             responseType: "stream",
+            timeout: TIMEOUT * (retryCount + 1),
             validateStatus: status => {
               return (status >= 200 && status < 300) || status === 416;
             }
