@@ -19,7 +19,24 @@ process.on("unhandledRejection", onError)
 update();
 */
 
-import { promisePool } from "./src/Promises/PromisePool";
+/*
+import { fromEvent, merge, of } from "rxjs";
+import { mapTo } from "rxjs/operators";
+
+const online = merge(
+  of(navigator.onLine),
+  fromEvent(window, "online").pipe(mapTo(true)),
+  fromEvent(window, "offline").pipe(mapTo(false))
+);
+
+online.subscribe(isOnline => {
+  // tslint:disable-next-line:no-console
+  console.log("Network changed!", isOnline);
+});
+*/
+
+/*
+import { promisePool } from "./src/promises/PromisePool";
 
 const sleep = (ms: number) =>
   new Promise<number>(resolve => setTimeout(() => resolve(ms), ms));
@@ -30,9 +47,10 @@ const gen = function*() {
   }
 };
 
-const pool = promisePool(gen(), 15);
+const pool = promisePool(gen(), 20);
 
 pool.start().then(num => {
   // tslint:disable-next-line:no-console
   console.log(num);
 });
+*/

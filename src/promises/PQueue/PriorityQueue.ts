@@ -1,6 +1,10 @@
 // Port of lower_bound from http://en.cppreference.com/w/cpp/algorithm/lower_bound
 // Used to compute insertion index to keep queue sorted after insertion
-function lowerBound<T>(array: T[], value: T, comp: (a: T, b: T) => number): number {
+function lowerBound<T>(
+  array: T[],
+  value: T,
+  comp: (a: T, b: T) => number
+): number {
   let first = 0;
   let count = array.length;
 
@@ -50,12 +54,21 @@ export class PriorityQueue implements IPriorityQueue {
       return;
     }
 
-    const index = lowerBound(this.queue, element, (a, b) => b.priority - a.priority);
+    const index = lowerBound(
+      this.queue,
+      element,
+      (a, b) => b.priority - a.priority
+    );
     this.queue.splice(index, 0, element);
   }
 
   public dequeue() {
-    return this.queue.shift().run;
+    const element = this.queue.shift();
+    return element
+      ? element.run
+      : () => {
+          /**/
+        };
   }
 
   get size() {

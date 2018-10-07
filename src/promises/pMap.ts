@@ -1,10 +1,10 @@
 export interface IOptions {
-	/**
-	 * Number of concurrently pending promises returned by `mapper`.
-	 *
-	 * @default Infinity
-	 */
-    concurrency?: number;
+  /**
+   * Number of concurrently pending promises returned by `mapper`.
+   *
+   * @default Infinity
+   */
+  concurrency?: number;
 }
 
 /**
@@ -13,7 +13,10 @@ export interface IOptions {
  * @param input - Iterated element.
  * @param index - Index of the element in the source array.
  */
-export type Mapper<Element = any, NewElement = any> = (input: Element, index: number) => NewElement | Promise<NewElement>
+export type Mapper<Element = any, NewElement = any> = (
+  input: Element,
+  index: number
+) => NewElement | Promise<NewElement>;
 
 /**
  * Returns a `Promise` that is fulfilled when all promises in `input` and ones returned from `mapper` are fulfilled, or rejects if any of the promises reject. The fulfilled value is an `Array` of the fulfilled values returned from `mapper` in `input` order.
@@ -40,71 +43,78 @@ export type Mapper<Element = any, NewElement = any> = (input: Element, index: nu
  * })();
  */
 
-export function pMap<Element, NewElement>(iterable: Iterable<Element>, mapper: Mapper<Element, NewElement>, options?: IOptions): Promise<NewElement[]> {
-    return new Promise((resolve, reject) => {
-        options = {
-            concurrency: Infinity, ...options
-        };
+export function pMap<Element, NewElement>(
+  iterable: Iterable<Element>,
+  mapper: Mapper<Element, NewElement>,
+  options?: IOptions
+): Promise<NewElement[]> {
+  return new Promise((resolve, reject) => {
+    options = {
+      concurrency: Infinity,
+      ...options
+    };
 
-        if (typeof mapper !== 'function') {
-            throw new TypeError('Mapper function is required');
+    if (typeof mapper !== "function") {
+      throw new TypeError("Mapper function is required");
+    }
+
+    const { concurrency } = options;
+
+    if (!(typeof concurrency === "number" && concurrency >= 1)) {
+      throw new TypeError(
+        `Expected \`concurrency\` to be a number from 1 and up, got \`${concurrency}\` (${typeof concurrency})`
+      );
+    }
+
+    const ret: NewElement[] = [];
+    const iterator = iterable[Symbol.iterator]();
+    let isRejected = false;
+    let isIterableDone = false;
+    let resolvingCount = 0;
+    let currentIndex = 0;
+
+    const next = () => {
+      if (isRejected) {
+        return;
+      }
+
+      const nextItem = iterator.next();
+      const i = currentIndex;
+      currentIndex++;
+
+      if (nextItem.done) {
+        isIterableDone = true;
+
+        if (resolvingCount === 0) {
+          resolve(ret);
         }
 
-        const { concurrency } = options;
+        return;
+      }
 
-        if (!(typeof concurrency === 'number' && concurrency >= 1)) {
-            throw new TypeError(`Expected \`concurrency\` to be a number from 1 and up, got \`${concurrency}\` (${typeof concurrency})`);
-        }
+      resolvingCount++;
 
-        const ret: NewElement[] = [];
-        const iterator = iterable[Symbol.iterator]();
-        let isRejected = false;
-        let isIterableDone = false;
-        let resolvingCount = 0;
-        let currentIndex = 0;
-
-        const next = () => {
-            if (isRejected) {
-                return;
-            }
-
-            const nextItem = iterator.next();
-            const i = currentIndex;
-            currentIndex++;
-
-            if (nextItem.done) {
-                isIterableDone = true;
-
-                if (resolvingCount === 0) {
-                    resolve(ret);
-                }
-
-                return;
-            }
-
-            resolvingCount++;
-
-            Promise.resolve(nextItem.value)
-                .then(element => mapper(element, i))
-                .then(
-                    value => {
-                        ret[i] = value;
-                        resolvingCount--;
-                        next();
-                    },
-                    error => {
-                        isRejected = true;
-                        reject(error);
-                    }
-                );
-        };
-
-        for (let i = 0; i < concurrency; i++) {
+      Promise.resolve(nextItem.value)
+        .then(element => mapper(element, i))
+        .then(
+          value => {
+            ret[i] = value;
+            resolvingCount--;
             next();
+          },
+          error => {
+            isRejected = true;
+            reject(error);
+          }
+        );
+    };
 
-            if (isIterableDone) {
-                break;
-            }
-        }
-    });
+    for (let i = 0; i < concurrency; i++) {
+      next();
+
+      if (isIterableDone) {
+        break;
+      }
+    }
+  });
 }

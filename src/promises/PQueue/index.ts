@@ -1,4 +1,8 @@
-import { ControllablePromise, IPriorityQueueOptions, PriorityQueue } from "../..";
+import {
+  ControllablePromise,
+  IPriorityQueueOptions,
+  PriorityQueue
+} from "../..";
 
 export interface IPQueueOptions {
   carryoverConcurrencyCount?: boolean;
@@ -12,14 +16,14 @@ export interface IPQueueOptions {
 export class PQueue {
   public isPaused: boolean;
 
-  private carryoverConcurrencyCount: boolean;
+  private carryoverConcurrencyCount?: boolean;
   private isIntervalIgnored: boolean;
   private intervalCount: number;
   private intervalCap: number;
   private interval: number;
-  private intervalId: NodeJS.Timer;
+  private intervalId: NodeJS.Timer | null;
   private intervalEnd: number;
-  private timeoutId: NodeJS.Timer;
+  private timeoutId: NodeJS.Timer | null;
   private queue: PriorityQueue;
   private queueClass: typeof PriorityQueue;
   private pendingCount: number;
@@ -38,20 +42,43 @@ export class PQueue {
       ...options
     };
 
-    if (!(typeof options.concurrency === 'number' && options.concurrency >= 1)) {
-      throw new TypeError(`Expected \`concurrency\` to be a number from 1 and up, got \`${options.concurrency}\` (${typeof options.concurrency})`);
+    if (
+      !(typeof options.concurrency === "number" && options.concurrency >= 1)
+    ) {
+      throw new TypeError(
+        `Expected \`concurrency\` to be a number from 1 and up, got \`${
+          options.concurrency
+        }\` (${typeof options.concurrency})`
+      );
     }
 
-    if (!(typeof options.intervalCap === 'number' && options.intervalCap >= 1)) {
-      throw new TypeError(`Expected \`intervalCap\` to be a number from 1 and up, got \`${options.intervalCap}\` (${typeof options.intervalCap})`);
+    if (
+      !(typeof options.intervalCap === "number" && options.intervalCap >= 1)
+    ) {
+      throw new TypeError(
+        `Expected \`intervalCap\` to be a number from 1 and up, got \`${
+          options.intervalCap
+        }\` (${typeof options.intervalCap})`
+      );
     }
 
-    if (!(typeof options.interval === 'number' && Number.isFinite(options.interval) && options.interval >= 0)) {
-      throw new TypeError(`Expected \`interval\` to be a finite number >= 0, got \`${options.interval}\` (${typeof options.interval})`);
+    if (
+      !(
+        typeof options.interval === "number" &&
+        Number.isFinite(options.interval) &&
+        options.interval >= 0
+      )
+    ) {
+      throw new TypeError(
+        `Expected \`interval\` to be a finite number >= 0, got \`${
+          options.interval
+        }\` (${typeof options.interval})`
+      );
     }
 
     this.carryoverConcurrencyCount = options.carryoverConcurrencyCount;
-    this.isIntervalIgnored = options.intervalCap === Infinity || options.interval === 0;
+    this.isIntervalIgnored =
+      options.intervalCap === Infinity || options.interval === 0;
     this.intervalCount = 0;
     this.intervalCap = options.intervalCap;
     this.interval = options.interval;
@@ -59,49 +86,61 @@ export class PQueue {
     this.intervalEnd = 0;
     this.timeoutId = null;
 
-    this.queue = new options.queueClass();
-    this.queueClass = options.queueClass;
+    this.queue = new options.queueClass!();
+    this.queueClass = options.queueClass!;
     this.pendingCount = 0;
     this.concurrency = options.concurrency;
     this.isPaused = options.autoStart === false;
-    this.resolveEmpty = () => { /**/ };
-    this.resolveIdle = () => { /**/ };
+    this.resolveEmpty = () => {
+      /**/
+    };
+    this.resolveIdle = () => {
+      /**/
+    };
   }
 
-  public add<T>(fn: () => ControllablePromise<T>, options?: IPriorityQueueOptions): ControllablePromise<T> {
-    return new ControllablePromise<T>((resolve, reject, progress, onPause, onResume, onCancel) => {
-      const run = () => {
-        this.pendingCount++;
-        this.intervalCount++;
+  public add<T>(
+    fn: () => ControllablePromise<T>,
+    options?: IPriorityQueueOptions
+  ): ControllablePromise<T> {
+    return new ControllablePromise<T>(
+      (resolve, reject, progress, onPause, onResume, onCancel) => {
+        const run = () => {
+          this.pendingCount++;
+          this.intervalCount++;
 
-        try {
-          const fnn = fn();
-          onPause(fnn.pause)
-          onResume(fnn.resume)
-          onCancel(fnn.cancel)
-          fnn.onProgress(progress);
-          fnn.then(
-            val => {
-              resolve(val);
-              this._next();
-            },
-            err => {
-              reject(err);
-              this._next();
-            }
-          );
-        } catch (err) {
-          reject(err);
-          this._next();
-        }
-      };
+          try {
+            const fnn = fn();
+            onPause(fnn.pause);
+            onResume(fnn.resume);
+            onCancel(fnn.cancel);
+            fnn.onProgress(progress);
+            fnn.then(
+              val => {
+                resolve(val);
+                this._next();
+              },
+              err => {
+                reject(err);
+                this._next();
+              }
+            );
+          } catch (err) {
+            reject(err);
+            this._next();
+          }
+        };
 
-      this.queue.enqueue(run, options);
-      this._tryToStartAnother();
-    });
+        this.queue.enqueue(run, options);
+        this._tryToStartAnother();
+      }
+    );
   }
 
-  public addAll<T>(fns: Array<() => ControllablePromise<T>>, options?: IPriorityQueueOptions): Array<ControllablePromise<T>> {
+  public addAll<T>(
+    fns: Array<() => ControllablePromise<T>>,
+    options?: IPriorityQueueOptions
+  ): Array<ControllablePromise<T>> {
     return fns.map(fn => this.add(fn, options));
   }
 
@@ -111,7 +150,9 @@ export class PQueue {
     }
 
     this.isPaused = false;
-    while (this._tryToStartAnother()) { /**/ }
+    while (this._tryToStartAnother()) {
+      /**/
+    }
   }
 
   public pause() {
@@ -175,11 +216,15 @@ export class PQueue {
 
   private _resolvePromises() {
     this.resolveEmpty();
-    this.resolveEmpty = () => { /**/ };
+    this.resolveEmpty = () => {
+      /**/
+    };
 
     if (this.pendingCount === 0) {
       this.resolveIdle();
-      this.resolveIdle = () => { /**/ };
+      this.resolveIdle = () => {
+        /**/
+      };
     }
   }
 
@@ -198,7 +243,9 @@ export class PQueue {
         // Act as the interval was done
         // We don't need to resume it here,
         // because it'll be resumed on line 160
-        this.intervalCount = (this.carryoverConcurrencyCount) ? this.pendingCount : 0;
+        this.intervalCount = this.carryoverConcurrencyCount
+          ? this.pendingCount
+          : 0;
       } else {
         // Act as the interval is pending
         if (this.timeoutId === null) {
@@ -216,7 +263,7 @@ export class PQueue {
     if (this.queue.size === 0) {
       // We can clear the interval ("pause")
       // because we can redo it later ("resume")
-      clearInterval(this.intervalId);
+      clearInterval(this.intervalId!);
       this.intervalId = null;
 
       this._resolvePromises();
@@ -250,11 +297,13 @@ export class PQueue {
 
   private _onInterval() {
     if (this.intervalCount === 0 && this.pendingCount === 0) {
-      clearInterval(this.intervalId);
+      clearInterval(this.intervalId!);
       this.intervalId = null;
     }
 
-    this.intervalCount = (this.carryoverConcurrencyCount) ? this.pendingCount : 0;
-    while (this._tryToStartAnother()) { /**/ }
+    this.intervalCount = this.carryoverConcurrencyCount ? this.pendingCount : 0;
+    while (this._tryToStartAnother()) {
+      /**/
+    }
   }
 }
