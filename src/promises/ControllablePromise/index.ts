@@ -171,52 +171,42 @@ export class ControllablePromise<T> implements IControllable<T> {
       });
   }
 
-  public resume() {
-    return new Promise<void>((resolveResume, rejectResume) => {
-      if (this.lock) {
-        return rejectResume(
-          new ControllablePromisePreconditionError("Operation in progress")
-        );
-      }
-      if (this.isCanceled) {
-        return rejectResume(
-          new ControllablePromisePreconditionError("Promise was canceled")
-        );
-      }
-      if (this.isSettled) {
-        return rejectResume(
-          new ControllablePromisePreconditionError("Promise was settled")
-        );
-      }
-      if (this.isResumed) {
-        return resolveResume();
-      }
-
-      if (typeof this.resumeFn !== "function") {
-        // No callback is provided for onResume
-        // We resolve pause promise if main promise is finished
-        this.resolvePause();
-        resolveResume();
-
-        // We resolve main promise if it is finished
-        this.resolveMain();
-        return;
-      }
-
-      this.lock = true;
-      this.resumeFn(resolveResume, rejectResume);
-    })
-      .then(() => {
-        this.lock = false;
-        this.state = ControllablePromiseState.RESUMED;
-      })
-      .catch(error => {
-        if (!(error instanceof ControllablePromisePreconditionError)) {
-          this.lock = false;
+  public async resume() {
+    try {
+      await new Promise<void>((resolveResume, rejectResume) => {
+        if (this.lock) {
+          return rejectResume(new ControllablePromisePreconditionError("Operation in progress"));
         }
-
-        throw error;
+        if (this.isCanceled) {
+          return rejectResume(new ControllablePromisePreconditionError("Promise was canceled"));
+        }
+        if (this.isSettled) {
+          return rejectResume(new ControllablePromisePreconditionError("Promise was settled"));
+        }
+        if (this.isResumed) {
+          return resolveResume();
+        }
+        if (typeof this.resumeFn !== "function") {
+          // No callback is provided for onResume
+          // We resolve pause promise if main promise is finished
+          this.resolvePause();
+          resolveResume();
+          // We resolve main promise if it is finished
+          this.resolveMain();
+          return;
+        }
+        this.lock = true;
+        this.resumeFn(resolveResume, rejectResume);
       });
+      this.lock = false;
+      this.state = ControllablePromiseState.RESUMED;
+    }
+    catch (error) {
+      if (!(error instanceof ControllablePromisePreconditionError)) {
+        this.lock = false;
+      }
+      throw error;
+    }
   }
 
   public cancel() {
