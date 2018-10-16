@@ -1,16 +1,15 @@
 import { assert } from "chai";
-
 import { lstatSync } from "fs";
 import { join } from "path";
 import { fetch } from "../src";
 
 describe("Fetch", () => {
   const url =
-    "http://192.168.113.152:3002/cytrus/dofus/hashes/eb/ebe61384adad5baad6271811c48323dbd4a7336e";
+    "http://cytrus/dofus/hashes/f1/f1c5b227e3c67937bef9f74bf013fc3d03ba3391";
   const path = join(__dirname, "./SmileyCategories.d2o");
   const file = {
-    hash: "ebe61384adad5baad6271811c48323dbd4a7336e",
-    size: 14268822
+    hash: "f1c5b227e3c67937bef9f74bf013fc3d03ba3391",
+    size: 700
   };
 
   it("downloaded file should have the expected size", done => {
