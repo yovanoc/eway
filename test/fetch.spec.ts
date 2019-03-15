@@ -18,8 +18,6 @@ describe("Fetch", () => {
     // tslint:disable-next-line:no-console
     // cp.onProgress(stats => console.log("stats", stats))
     cp.then(() => {
-        console.log(file.size);
-        console.log(lstatSync(path).size);
       assert.strictEqual(lstatSync(path).size, file.size);
       done();
     });
