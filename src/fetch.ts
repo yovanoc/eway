@@ -29,7 +29,8 @@ export function fetch(
   subpath: string,
   filepath: string,
   fileData: IFile,
-  checkHash = true
+  checkHash = true,
+  checkSize = true,
 ): ControllablePromise<void> {
   const { size: expectedSize } = fileData;
 
@@ -106,9 +107,12 @@ export function fetch(
 
         ws.once("finish", () => {
           if (
-            fs.existsSync(filepath) &&
-            fs.statSync(filepath).size === expectedSize
+            fs.existsSync(filepath)
           ) {
+            if (checkSize == true
+                && fs.statSync(filepath).size !== expectedSize) {
+                reject(new Error("Downloaded file has not the expected size"));
+            }
             isCancelable = false;
             if (!checkHash) {
               return resolve();
@@ -132,7 +136,7 @@ export function fetch(
             if (fs.existsSync(filepath)) {
               fs.unlinkSync(filepath);
             }
-            reject(new Error("Downloaded file has not the expected size"));
+            reject(new Error("Downloaded file could not be read."));
           }
         });
 
