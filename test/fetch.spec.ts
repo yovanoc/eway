@@ -5,11 +5,11 @@ import { fetch } from "../src";
 
 describe("Fetch", () => {
   const url =
-    "http://cytrus/dofus/hashes/f1/f1c5b227e3c67937bef9f74bf013fc3d03ba3391";
-  const path = join(__dirname, "./SmileyCategories.d2o");
+    "https://icons-for-free.com/free-icons/png/512/1337497.png";
+  const path = join(__dirname, "./pikachu.png");
   const file = {
-    hash: "f1c5b227e3c67937bef9f74bf013fc3d03ba3391",
-    size: 700
+    hash: "a7efe3985ca1e5f77b92031cf3f46f41aaeab822",
+    size: 45612
   };
 
   it("downloaded file should have the expected size", done => {
