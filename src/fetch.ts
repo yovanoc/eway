@@ -109,7 +109,7 @@ export function fetch(
           if (
             fs.existsSync(filepath)
           ) {
-            if (checkSize == true
+            if (checkSize === true
                 && fs.statSync(filepath).size !== expectedSize) {
                 reject(new Error("Downloaded file has not the expected size"));
             }
